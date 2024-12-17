@@ -1,0 +1,419 @@
+openapi: 3.0.0
+info:
+  title: gateway-refund-capabilities
+  description: API para ajustar el documento de refunds capabilities y verificar si la transacción cumple con las condiciones necesarias para permitir la creación de un crédito.
+  version: 1.0.0
+servers:
+  - url: https://gateway-refund-capabilities-staging.melisystems.com
+    description: Staging
+  - url: https://gateway-refund-capabilities-prod.melisystems.com
+    description: Production
+
+paths:
+  /capabilities/config/search:
+    get:
+      summary: Consultar capabilities adjustment
+      description: Este endpoint se encarga de validar si la transacción en curso cumple con las condiciones necesarias para permitir la creación de un crédito.
+        **Nota:** El campo `credits_support` es parte de la configuración y puede cambiar la forma en que se procesan las solicitudes de créditos.
+      parameters:
+        - name: site_id
+          in: query
+          required: true
+          schema:
+            type: string
+          description: "Identificador del sitio, ejemplo: mlb"
+        - name: operation
+          in: query
+          required: true
+          schema:
+            type: string
+          description: "Tipo de operación, ejemplo: authorization"
+        - name: authorization
+          in: query
+          required: true
+          schema:
+            type: string
+          description: "Método de pago, ejemplo: visa"
+        - name: payment_method
+          in: query
+          required: true
+          schema:
+            type: string
+          description: "Método de pago"
+        - name: processor
+          in: query
+          required: false
+          schema:
+            type: string
+          description: "Procesador encargado, ejemplo: genova"
+        - name: acquirer
+          in: query
+          required: false
+          schema:
+            type: string
+          description: "Adquirente encargado, ejemplo: getnet"
+      responses:
+        '200':
+          description: Respuesta exitosa con los detalles de la capability
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    acquirer:
+                      type: string
+                    amount_conditions:
+                      type: object
+                      properties:
+                        amount_min:
+                          type: number
+                          format: float
+                        amount_min_currency:
+                          type: string
+                    credits_support:
+                      type: boolean
+                    last_indexed:
+                      type: string
+                      format: date-time
+                    merchant_number:
+                      type: string
+                    operation:
+                      type: string
+                    payment_method:
+                      type: string
+                    processing_conditions:
+                      type: object
+                      properties:
+                        partial:
+                          type: object
+                          properties:
+                            amount:
+                              type: number
+                              format: float
+                            days_more_than:
+                              type: integer
+                            forced_to_offline:
+                              type: boolean
+                            hours:
+                              type: integer
+                            list_online_installments:
+                              type: array
+                              items:
+                                type: integer
+                            max_online_installments:
+                              type: integer
+                            refunds_count:
+                              type: integer
+                        total:
+                          type: object
+                          properties:
+                            amount:
+                              type: number
+                              format: float
+                            days_more_than:
+                              type: integer
+                            forced_to_offline:
+                              type: boolean
+                            hours:
+                              type: integer
+                            list_online_installments:
+                              type: array
+                              items:
+                                type: integer
+                            max_online_installments:
+                              type: integer
+                            refunds_count:
+                              type: integer
+                    processing_mode:
+                      type: object
+                      properties:
+                        offline:
+                          type: object
+                          properties:
+                            expected_reconciliation:
+                              type: object
+                              properties:
+                                days_count:
+                                  type: integer
+                                days_count_greater_than_1x:
+                                  type: integer
+                                days_to_spare:
+                                  type: integer
+                                days_type:
+                                  type: string
+                            expected_statement_due:
+                              type: object
+                              properties:
+                                days_count:
+                                  type: integer
+                                days_count_greater_than_1x:
+                                  type: integer
+                                days_to_spare:
+                                  type: integer
+                                days_type:
+                                  type: string
+                        online:
+                          type: object
+                          properties:
+                            expected_reconciliation:
+                              type: object
+                              properties:
+                                days_count:
+                                  type: integer
+                                days_count_greater_than_1x:
+                                  type: integer
+                                days_to_spare:
+                                  type: integer
+                                days_type:
+                                  type: string
+                            expected_statement_due:
+                              type: object
+                              properties:
+                                days_count:
+                                  type: integer
+                                days_count_greater_than_1x:
+                                  type: integer
+                                days_to_spare:
+                                  type: integer
+                                days_type:
+                                  type: string
+                    processor:
+                      type: string
+                    site_id:
+                      type: string
+        '404':
+          description: No se encontraron configuraciones
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "error when try to get config"
+
+  /capabilities/config:
+    put:
+      summary: Actualizar capabilities adjustment
+      description:  Este endpoint permite actualizar las capabilities existentes. El nuevo campo `credits_support` se agrega para habilitar o deshabilitar el soporte de créditos.
+        **Recuerdar que si este campo no está habilitado, no se podrá utilizar el crédito en las transacciones.**
+      parameters:
+        - name: site_id
+          in: query
+          required: true
+          schema:
+            type: string
+          description: "Identificador del sitio"
+        - name: operation
+          in: query
+          required: true
+          schema:
+            type: string
+          description: "Tipo de operación"
+        - name: authorization
+          in: query
+          required: true
+          schema:
+            type: string
+          description: "Método de pago"
+        - name: payment_method
+          in: query
+          required: true
+          schema:
+            type: string
+          description: "Método de pago"
+        - name: processor
+          in: query
+          required: false
+          schema:
+            type: string
+          description: "Procesador encargado"
+        - name: acquirer
+          in: query
+          required: false
+          schema:
+            type: string
+          description: "Adquirente encargado"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                credits_support:
+                  type: boolean
+            example:
+              credits_support: true
+      responses:
+        '200':
+          description: Actualización exitosa de las capabilities
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  acquirer:
+                    type: string
+                  credits_support:
+                    type: boolean
+                  last_indexed:
+                    type: string
+                    format: date-time
+                  merchant_number:
+                    type: string
+                  operation:
+                    type: string
+                  payment_method:
+                    type: string
+                  processor:
+                    type: string
+                  site_id:
+                    type: string
+        '404':
+          description: No se encontraron configuraciones
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "error when try to get config"
+
+    post:
+      summary: Crear capabilities adjustment
+      description:  Este endpoint permite crear nuevas configuraciones de capabilities, incluyendo el soporte de créditos con el campo `credits_support`.
+        **Este campo es fundamental para habilitar la creación de créditos en las transacciones.**
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                acquirer:
+                  type: string
+                operation:
+                  type: string
+                payment_method:
+                  type: string
+                credits_support:
+                  type: boolean
+                processing_conditions:
+                  type: object
+                  properties:
+                    partial:
+                      type: object
+                      properties:
+                        amount:
+                          type: number
+                          format: float
+                        days_more_than:
+                          type: integer
+                        forced_to_offline:
+                          type: boolean
+                        hours:
+                          type: integer
+                        max_online_installments:
+                          type: integer
+                        refunds_count:
+                          type: integer
+                    total:
+                      type: object
+                      properties:
+                        amount:
+                          type: number
+                          format: float
+                        days_more_than:
+                          type: integer
+                        forced_to_offline:
+                          type: boolean
+                        hours:
+                          type: integer
+                        max_online_installments:
+                          type: integer
+                        refunds_count:
+                          type: integer
+                processing_mode:
+                  type: object
+                  properties:
+                    offline:
+                      type: object
+                      properties:
+                        expected_reconciliation:
+                          type: object
+                          properties:
+                            days_count:
+                              type: integer
+                            days_to_spare:
+                              type: integer
+                            days_type:
+                              type: string
+                        expected_statement_due:
+                          type: object
+                          properties:
+                            days_count:
+                              type: integer
+                            days_to_spare:
+                              type: integer
+                            days_type:
+                              type: string
+                    online:
+                      type: object
+                      properties:
+                        expected_reconciliation:
+                          type: object
+                          properties:
+                            days_count:
+                              type: integer
+                            days_to_spare:
+                              type: integer
+                            days_type:
+                              type: string
+                        expected_statement_due:
+                          type: object
+                          properties:
+                            days_count:
+                              type: integer
+                            days_to_spare:
+                              type: integer
+                            days_type:
+                              type: string
+                site_id:
+                  type: string
+      responses:
+        '200':
+          description: Creación exitosa de capabilities
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  acquirer:
+                    type: string
+                  credits_support:
+                    type: boolean
+                  last_indexed:
+                    type: string
+                    format: date-time
+                  merchant_number:
+                    type: string
+                  operation:
+                    type: string
+                  payment_method:
+                    type: string
+                  processor:
+                    type: string
+                  site_id:
+                    type: string
+        '400':
+          description: Error en la creación de capabilities
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "Invalid request"
