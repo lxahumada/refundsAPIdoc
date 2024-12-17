@@ -1,0 +1,243 @@
+openapi: 3.0.0
+info:
+  title: Procesamiento de Crédito - Integración Genova
+  description: |
+    Este endpoint se habilita para procesar solicitudes de crédito, enviándolas al adquirente correspondiente para su validación y ejecución.
+  version: 1.0.0
+servers:
+  - url: https://pending.com
+    description: URL para la integración con Genova
+
+paths:
+  /pending:
+    post:
+      summary: Enviar una solicitud de crédito
+      description: |
+        Este endpoint permitirá procesar una solicitud de crédito, enviándola al adquirente correspondiente para su validación y ejecución.
+      requestBody:
+        description: Solicitud de crédito que se enviará al adquirente para validación y ejecución.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                merchant_operation_reference:
+                  type: string
+                  example: "gtw_transaction_idgtw_transaction_id_CV"
+                  description: "Referencia de la operación del comerciante."
+                processor_id:
+                  type: string
+                  example: "MP"
+                  description: "ID del procesador."
+                merchant_id:
+                  type: string
+                  example: "2017"
+                  description: "ID del comerciante (definido para cada país)."
+                previous_transaction:
+                  type: object
+                  properties:
+                    network_response_data:
+                      type: object
+                      properties:
+                        transaction_identification_number:
+                          type: string
+                          example: "12345"
+                        financial_network_code:
+                          type: string
+                          example: "123"
+                        banknet_reference_number:
+                          type: string
+                          example: "1234567"
+                        settlement_date:
+                          type: string
+                          example: "1234"
+                  description: "Datos para identificar transacciones anteriores."
+                card:
+                  type: object
+                  properties:
+                    number_id:
+                      type: string
+                      example: "CHIDNIXDGFJSOXSGQMDRNMXDJJOIKSFDGAIHMHNK"
+                      description: "Número de la tarjeta."
+                    expiration_month:
+                      type: integer
+                      example: 12
+                      description: "Mes de expiración de la tarjeta."
+                    expiration_year:
+                      type: integer
+                      example: 2030
+                      description: "Año de expiración de la tarjeta."
+                    holder:
+                      type: object
+                      properties:
+                        name:
+                          type: string
+                          example: "cardholder-fake-bra"
+                        id:
+                          type: object
+                          properties:
+                            type:
+                              type: string
+                              example: "CPF"
+                            number:
+                              type: string
+                              example: "145022932"
+                  description: "Detalles de la tarjeta de crédito."
+                card_processing_mode:
+                  type: string
+                  example: "credit"
+                  description: "Modo de procesamiento de la tarjeta (e.g., crédito o débito)."
+                amount:
+                  type: object
+                  properties:
+                    amount:
+                      type: string
+                      example: "100"
+                    currency:
+                      type: string
+                      example: "BRL"
+                  description: "Cantidad y moneda del crédito."
+                soft_descriptor:
+                  type: string
+                  example: "AUTHTEST"
+                  description: "Descriptor suave para la transacción."
+                hard_descriptor:
+                  type: string
+                  example: "MERPAGO"
+                  description: "Descriptor duro para la transacción."
+                mcc:
+                  type: string
+                  example: "5199"
+                  description: "Código de categoría del comerciante (Merchant Category Code)."
+                sub_merchant:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                      example: "1059238899"
+                    tax_id:
+                      type: object
+                      properties:
+                        type:
+                          type: string
+                          example: "CNPJ"
+                        number:
+                          type: string
+                          example: "27525118000190"
+                    location:
+                      type: object
+                      properties:
+                        address:
+                          type: string
+                          example: "Rua Falsa 123"
+                        city:
+                          type: string
+                          example: "Sao Paulo"
+                        zip_code:
+                          type: string
+                          example: "05005001"
+                        region:
+                          type: string
+                          example: "BR-SP"
+                        country_code:
+                          type: string
+                          example: "BRA"
+                    legal_name:
+                      type: string
+                      example: "Lojista Falso"
+                  description: "Detalles del sub-comerciante."
+                country_code:
+                  type: string
+                  example: "BRA"
+                  description: "Código del país."
+      responses:
+        '200':
+          description: Transacción de crédito procesada con éxito.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  acquirer_transaction_id:
+                    type: string
+                    example: "CAQABAQRiNEUoySOdIEUveckDzG_E4fm81gAqOJiJPNjMzf9AUQAgPCoo1jhICsk"
+                  response_code:
+                    type: string
+                    example: "00"
+                  network_response_code:
+                    type: string
+                    example: "00"
+                  response_message:
+                    type: string
+                    example: "approved or completed successfully"
+                  status:
+                    type: string
+                    example: "approved"
+                  authorization_code:
+                    type: string
+                    example: "M12345"
+                  additional_data:
+                    type: object
+                    properties:
+                      B:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            code:
+                              type: string
+                              example: "6"
+                            description:
+                              type: string
+                              example: "not_applicable"
+                      D:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            code:
+                              type: string
+                              example: "2"
+                            description:
+                              type: string
+                              example: "issuer"
+                  network_data:
+                    type: object
+                    properties:
+                      request:
+                        type: object
+                        properties:
+                          transmission_date_time:
+                            type: string
+                            example: "1106175821"
+                          retrieval_reference_number:
+                            type: string
+                            example: "stg591256bd0"
+                          card_acceptor_terminal_id:
+                            type: string
+                            example: "g44COGrm"
+                          card_acceptor_name:
+                            type: string
+                            example: "MERPAGO*AUTHTEST"
+                          card_acceptor_id:
+                            type: string
+                            example: "56"
+                          system_trace_audit_number:
+                            type: string
+                            example: "138845"
+                          merchant_category_code:
+                            type: string
+                            example: "5199"
+                      response:
+                        type: object
+                        properties:
+                          transaction_identification_number:
+                            type: string
+                            example: "456723"
+                          response_code:
+                            type: string
+                            example: "00"
+                          pan_mapping_file:
+                            type: object
+                          payment_account_data:
+                            type: object
