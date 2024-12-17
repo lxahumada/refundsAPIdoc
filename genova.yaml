@@ -150,6 +150,20 @@ paths:
                   type: string
                   example: "BRA"
                   description: "Código del país."
+              required:
+                - merchant_operation_reference
+                - processor_id
+                - merchant_id
+                - card.number_id
+                - card.expiration_month
+                - card.expiration_year
+                - amount
+                - mcc
+                - country_code
+                - soft_descriptor
+                - hard_descriptor
+                - sub_merchant
+                - card_processing_mode
       responses:
         '200':
           description: Transacción de crédito procesada con éxito.
