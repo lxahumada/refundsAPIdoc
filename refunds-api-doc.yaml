@@ -1,0 +1,250 @@
+openapi: 3.0.0
+info:
+  title: Refunds API
+  description: >
+    Se habilitará un nuevo endpoint que permitirá la creación y procesamiento de un crédito.  
+    Este endpoint gestionará la operación como una transacción síncrona, realizando las validaciones necesarias para determinar si el crédito puede ser creado.
+  version: 1.0.0
+servers:
+  - url: https://gateway-refunds-staging.melisystems.com
+    description: Entorno de staging
+  - url: https://gateway-refunds-prod.melisystems.com
+    description: Entorno de producción
+paths:
+  /g2/credit:
+    post:
+      summary: Solicitar crédito
+      description: Endpoint que permite la creación y procesamiento de un crédito.
+      operationId: createCredit
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                headers:
+                  type: object
+                  properties:
+                    Authorization:
+                      type: array
+                      items:
+                        type: string
+                      example: ["Bearer token"]
+                idempotency_key:
+                  type: string
+                  description: Llave única para asegurar la idempotencia.
+                  example: "unique-idempotency-key"
+                id:
+                  type: string
+                  description: Identificador único de la transacción.
+                  example: "12345"
+                acquirer:
+                  type: string
+                  description: Identificador del adquirente para procesar el crédito.
+                  example: "genova"
+                country:
+                  type: string
+                  description: País donde se realiza la transacción.
+                  example: "BR"
+                operation:
+                  type: object
+                  properties:
+                    refund_id:
+                      type: string
+                      description: ID del refund asociado.
+                      example: "123456"
+                    type:
+                      type: string
+                      description: Tipo de operación.
+                      example: "refund"
+                provider:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                      example: "sandbox"
+                    username:
+                      type: string
+                      example: "API5555"
+                    password:
+                      type: string
+                      example: "123"
+                merchant:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                      example: "1ab2b34567b7f3d5698eb3"
+                    number:
+                      type: string
+                      example: "123456789"
+                    account:
+                      type: string
+                      example: "123456789"
+                    terminal:
+                      type: string
+                      example: "123456"
+                    descriptor:
+                      type: object
+                      properties:
+                        merchant_name:
+                          type: string
+                          example: "MERCAPAGO"
+                        product:
+                          type: string
+                          example: "GETNET"
+                        product_name:
+                          type: string
+                          example: "MERCADOLIBRE2"
+                options:
+                  type: object
+                  nullable: true
+                  example: null
+      responses:
+        "201":
+          description: El crédito fue creado y procesado exitosamente.
+          content:
+            application/json:
+              schema:
+                type: object
+                $ref: '#/components/schemas/SuccessResponse'
+        "400":
+          description: Solicitud inválida.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        "404":
+          description: Refund no encontrado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        "409":
+          description: Reglas de negocio impiden procesar el crédito.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        "500":
+          description: Error interno del servidor.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+components:
+  schemas:
+    SuccessResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          example: "86100012345_7267377b6f77577"
+        acquirer:
+          type: string
+          example: "getnet"
+        country:
+          type: string
+          example: "BRA"
+        operation:
+          type: object
+          properties:
+            type:
+              type: string
+              example: "credit"
+            mode:
+              type: string
+              example: "online"
+            currency:
+              type: string
+              example: "BRL"
+            amount:
+              type: number
+              example: 13
+            payment_id:
+              type: integer
+              example: 12345678942
+            card:
+              type: object
+              properties:
+                number:
+                  type: string
+                  example: "4111111111111111"
+                expiry:
+                  type: string
+                  example: "12/25"
+                cvv:
+                  type: string
+                  example: "123"
+            amount_total:
+              type: number
+              example: 25
+        provider:
+          $ref: '#/components/schemas/Provider'
+        merchant:
+          $ref: '#/components/schemas/Merchant'
+        options:
+          type: object
+          nullable: true
+          example: null
+        result:
+          type: object
+          properties:
+            status:
+              type: string
+              example: "deferred"
+            status_detail_g2:
+              type: string
+              example: "accredited"
+    ApiError:
+      type: object
+      properties:
+        code:
+          type: string
+          example: "error"
+        http_status:
+          type: integer
+          example: 400
+        detail:
+          type: string
+          example: "Solicitud inválida. Faltan parámetros requeridos, hay un formato incorrecto o un campo no es válido."
+    Provider:
+      type: object
+      properties:
+        id:
+          type: string
+          example: "sandbox"
+        username:
+          type: string
+          example: "API5555"
+        password:
+          type: string
+          example: "123"
+    Merchant:
+      type: object
+      properties:
+        id:
+          type: string
+          example: "1ab2b34567b7f3d5698eb3"
+        number:
+          type: string
+          example: "123456789"
+        account:
+          type: string
+          example: "123456789"
+        terminal:
+          type: string
+          example: "123456"
+        descriptor:
+          type: object
+          properties:
+            merchant_name:
+              type: string
+              example: "MERCAPAGO"
+            product:
+              type: string
+              example: "GETNET"
+            product_name:
+              type: string
+              example: "MERCADOLIBRE2"
